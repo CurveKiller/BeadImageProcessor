@@ -198,6 +198,10 @@ class BIP:
             self.cell_change('l-click', event.x, event.y, cur_tag, self.bip.primary_color)
             self.canvas.itemconfigure(cur_tag, fill=self.bip.primary_color)
 
+        def middle_click_handler(self, event, cur_tag):
+            self.cell_change('m-click', event.x, event.y, cur_tag, self.canvas.itemcget(self.canvas.find_withtag(cur_tag), "fill"))
+            self.bip.primary_color = self.canvas.itemcget(self.canvas.find_withtag(cur_tag), "fill")
+
         def right_click_handler(self, event, cur_tag):
             self.cell_change('r-click', event.x, event.y, cur_tag, self.bip.secondary_color)
             self.canvas.itemconfigure(cur_tag, fill=self.bip.secondary_color)
@@ -211,6 +215,7 @@ class BIP:
                                          fill=fill, outline=outline, tags=(tag, self.ALL_TAG))
 
             self.canvas.tag_bind(tag, '<ButtonPress-1>', partial(self.left_click_handler, cur_tag=tag))
+            self.canvas.tag_bind(tag, '<ButtonPress-2>', partial(self.middle_click_handler, cur_tag=tag))
             self.canvas.tag_bind(tag, '<ButtonPress-3>', partial(self.right_click_handler, cur_tag=tag))
 
         def populate(self):
@@ -244,6 +249,8 @@ class BIP:
             #         self.cell_change(f'grid-{not self.bip.grid_on}', '', '', cell_tag, '')
             #         self.canvas.itemconfigure(cell_tag, outline='' if self.bip.grid_on else self.BLACK)
             self.canvas.itemconfigure(self.ALL_TAG, outline='' if self.bip.grid_on else self.BLACK)
+
+
 def main():
     my_bip = BIP()
     my_bip.run()
