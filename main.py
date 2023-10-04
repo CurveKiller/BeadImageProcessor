@@ -86,6 +86,9 @@ class BIP:
             # self.debug_on = not self.debug_on
             # self.debug_on = not self.debug_on
 
+        def size_change_command(row=0, col=0):
+            pass
+
         action_button_frame = ttk.Frame(self.main_frame)
         action_button_frame.grid(row=0, column=0, sticky='W')
         button_height = 1
@@ -130,13 +133,29 @@ class BIP:
                                           variable=self.debug_on )
         debug_check_box.grid(row=0, column=7)
 
+        row_less_button = Button(action_button_frame, text='row-', height=button_height, width=button_width, padx=0, pady=0,
+                             command=partial(size_change_command, row=-1))
+        row_less_button.grid(row=1, column=0)
+
+        row_plus_button = Button(action_button_frame, text='row+', height=button_height, width=button_width, padx=0, pady=0,
+                            command=partial(size_change_command, row=1))
+        row_plus_button.grid(row=1, column=1)
+
+        col_less_button = Button(action_button_frame, text='col-', height=button_height, width=button_width, padx=0, pady=0,
+                         command=partial(size_change_command, col=-1))
+        col_less_button.grid(row=1, column=2)
+
+        col_plus_button = Button(action_button_frame, text='col+', height=button_height, width=button_width, padx=0, pady=0,
+                         command=partial(size_change_command, col=1))
+        col_plus_button.grid(row=1, column=3)
+
     def setup_color_buttons(self):
         def set_fill_color(new_fill_color):
             self.primary_color = new_fill_color
 
         color_button_frame = ttk.Frame(self.main_frame)
 
-        color_button_frame.grid(row=0, column=2, sticky='E')
+        color_button_frame.grid(row=0, column=2, sticky='SE')
         button_height = 1
         button_width = 3
 
@@ -183,11 +202,11 @@ class BIP:
         BLACK = '#000000'
         WHITE = '#FFFFFF'
         ALL_TAG = 'ALL'
-        SHEET_HEIGHT = 45
-        SHEET_WIDTH = 179
 
         def __init__(self, bip):
             self.bip = bip
+            self.sheet_height = 45
+            self.sheet_width = 179
             self.canvas = Canvas(bip.sheet_frame, bg=self.WHITE)
             self.canvas.grid(row=0, column=0, sticky='NSEW')
 
@@ -201,6 +220,10 @@ class BIP:
 
             self.canvas.configure(scrollregion=(0, 0, 5015, 858))
 
+            self.mat = []
+
+        def reset(self):
+            self.canvas.delete(self.ALL_TAG)
             self.mat = []
 
         def cell_change(self, action, x, y, tag, color):
@@ -227,20 +250,15 @@ class BIP:
             # print(f'image size = **{image.size}**')
             pixels = image.load()
             # print(f'pixels[0][0] = **{pixels[0, 0]}**')
-            if 0 < image.size[0] <= self.SHEET_WIDTH and 0 < image.size[1] <= self.SHEET_HEIGHT:
-                # print('good')
-                print(f'pixels = {pixels}')
-                for r in range(image.size[0]):
-                    for c in range(image.size[1]):
-                        cur_tag = self.get_tag(r, c)
-                        self.canvas.itemconfigure(cur_tag, fill=self.get_rgb(pixels[r,c]))
-            else:
-                if not 0 < image.size[0] < self.SHEET_WIDTH:
-                    print('Image is too wide!')
-                elif not 0 < image.size[1] < self.SHEET_HEIGHT:
-                    print('Image is too tall!')
-                else:
-                    print('Image is no good?>')
+            self.reset()
+            self.populate(height=image.size[1], width=image.size[0])
+            # print('good')
+            print(f'pixels = {pixels}')
+            for r in range(image.size[0]):
+                for c in range(image.size[1]):
+                    cur_tag = self.get_tag(r, c)
+                    self.canvas.itemconfigure(cur_tag, fill=self.get_rgb(pixels[r,c]))
+
 
         def left_click_handler(self, event, cur_tag):
             self.cell_change('l-click', event.x, event.y, cur_tag, self.bip.primary_color)
@@ -269,7 +287,7 @@ class BIP:
             self.canvas.tag_bind(tag, '<ButtonPress-2>', partial(self.middle_click_handler, cur_tag=tag))
             self.canvas.tag_bind(tag, '<ButtonPress-3>', partial(self.right_click_handler, cur_tag=tag))
 
-        def populate(self):
+        def populate(self, height=-1, width=-1):
             # print(f'height = {self.canvas.winfo_reqheight()}')
             # print(f'width  = {self.canvas.winfo_reqwidth()}')
             # print(f'height = {self.canvas.winfo_height()}')
@@ -279,14 +297,27 @@ class BIP:
             # self.bip.
             #int(self.canvas.winfo_height()*1.4)
             # print(f'{self.canvas.winfo_height()} / {self.CELL_HEIGHT}')
-            for r in range(0, self.SHEET_HEIGHT, 1):
-                new_row = []
-                print(self.CELL_WIDTH)
-                for c in range(0, self.SHEET_WIDTH, 1):
-                    tag = f'{r}_{c}'
-                    self.draw('populate', c, r, self.WHITE, self.BLACK, tag=tag)
-                    new_row.append(tag)
-                self.mat.append(new_row)
+
+            if height == -1 and width == -1:
+                for r in range(0, self.sheet_height, 1):
+                    new_row = []
+                    print(self.CELL_WIDTH)
+                    for c in range(0, self.sheet_width, 1):
+                        tag = f'{r}_{c}'
+                        self.draw('populate', c, r, self.WHITE, self.BLACK, tag=tag)
+                        new_row.append(tag)
+                    self.mat.append(new_row)
+            else:
+                self.sheet_height = height
+                self.sheet_width = width
+                for r in range(0, self.sheet_height, 1):
+                    new_row = []
+                    print(self.CELL_WIDTH)
+                    for c in range(0, self.sheet_width, 1):
+                        tag = f'{r}_{c}'
+                        self.draw('populate', c, r, self.WHITE, self.BLACK, tag=tag)
+                        new_row.append(tag)
+                    self.mat.append(new_row)
 
         def clear(self):
             # for row in self.mat:
