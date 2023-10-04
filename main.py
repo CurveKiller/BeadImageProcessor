@@ -1,6 +1,8 @@
 from tkinter import *
 from tkinter import ttk
 from functools import partial
+from tkinter import filedialog as fd
+from PIL import Image
 import math
 
 class BIP:
@@ -45,6 +47,20 @@ class BIP:
 
         def open_command():
             print('open')
+            filetypes = (
+                ('Png files', '*.png'),
+                ('All files', '*.*')
+            )
+
+            filename = fd.askopenfilename(
+                title='Open a file',
+                initialdir='/',
+                filetypes=filetypes)
+
+            if filename != "":
+                image = Image.open(filename)
+
+                self.sheet.load(image)
 
         def save_as_command():
             print('save as')
@@ -83,7 +99,7 @@ class BIP:
         open_button = Button(action_button_frame, text='Open', height=button_height, width=button_width, padx=0, pady=0,
                              command=open_command)
         open_button.grid(row=0, column=1)
-        open_button['state'] = 'disabled'
+        # open_button['state'] = 'disabled'
 
         save_as_button = Button(action_button_frame, text='Save As', height=button_height, width=button_width, padx=0,
                                 pady=0, command=save_as_command)
@@ -142,9 +158,8 @@ class BIP:
         for index in range(len(color_list)):
             cur_color = color_list[index]
             color_button = Button(color_button_frame, height=button_height, width=button_width, padx=0, pady=0,
-                                  bg=cur_color, command=partial(set_fill_color, cur_color))
+                                  bg=cur_color, activebackground=cur_color, command=partial(set_fill_color, cur_color))
             color_button.grid(row=0, column=index)
-
 
     def populate_sheet(self):
         self.sheet.populate()
@@ -168,6 +183,8 @@ class BIP:
         BLACK = '#000000'
         WHITE = '#FFFFFF'
         ALL_TAG = 'ALL'
+        SHEET_HEIGHT = 45
+        SHEET_WIDTH = 179
 
         def __init__(self, bip):
             self.bip = bip
@@ -191,8 +208,39 @@ class BIP:
             #     print(f'{action:10} | ({x:4},{y:4}) | tag = {tag:9} | color = {color}')
             print(f'{action:10} | ({x:4},{y:4}) | tag = {tag:9} | color = {color}')
 
-        def get_tag(self, x, y):
-            return self.mat[y // self.CELL_HEIGHT][x // self.CELL_WIDTH]
+        def get_tag(self, r, c):
+            return f'{c}_{r}'
+
+        def get_rgb(self, pixel):
+            print(pixel)
+            hex_r = hex(pixel[0])
+            hex_g = hex(pixel[1])
+            hex_b = hex(pixel[2])
+
+            hex_r = hex_r[2:len(hex_r)].upper()
+            hex_g = hex_g[2:len(hex_g)].upper()
+            hex_b = hex_b[2:len(hex_b)].upper()
+            return f'#{hex_r:02}{hex_g:02}{hex_b:02}'
+
+        def load(self, image):
+            image = image.convert('RGB')
+            # print(f'image size = **{image.size}**')
+            pixels = image.load()
+            # print(f'pixels[0][0] = **{pixels[0, 0]}**')
+            if 0 < image.size[0] <= self.SHEET_WIDTH and 0 < image.size[1] <= self.SHEET_HEIGHT:
+                # print('good')
+                print(f'pixels = {pixels}')
+                for r in range(image.size[0]):
+                    for c in range(image.size[1]):
+                        cur_tag = self.get_tag(r, c)
+                        self.canvas.itemconfigure(cur_tag, fill=self.get_rgb(pixels[r,c]))
+            else:
+                if not 0 < image.size[0] < self.SHEET_WIDTH:
+                    print('Image is too wide!')
+                elif not 0 < image.size[1] < self.SHEET_HEIGHT:
+                    print('Image is too tall!')
+                else:
+                    print('Image is no good?>')
 
         def left_click_handler(self, event, cur_tag):
             self.cell_change('l-click', event.x, event.y, cur_tag, self.bip.primary_color)
@@ -207,12 +255,15 @@ class BIP:
             self.canvas.itemconfigure(cur_tag, fill=self.bip.secondary_color)
 
         def draw(self, action, x, y, fill, outline, tag):
+            x = x*self.CELL_WIDTH
+            y = y*self.CELL_HEIGHT
             self.cell_change(action, x, y, tag, fill)
             cell = self.canvas.create_rectangle(x - x % self.CELL_WIDTH + self.CELL_OFFSET,
-                                         y - y % self.CELL_HEIGHT + self.CELL_OFFSET,
-                                         x - x % self.CELL_WIDTH + self.CELL_WIDTH + self.CELL_OFFSET,
-                                         y - y % self.CELL_HEIGHT + self.CELL_HEIGHT + self.CELL_OFFSET,
-                                         fill=fill, outline=outline, tags=(tag, self.ALL_TAG))
+                                                y - y % self.CELL_HEIGHT + self.CELL_OFFSET,
+                                                x - x % self.CELL_WIDTH + self.CELL_WIDTH + self.CELL_OFFSET,
+                                                y - y % self.CELL_HEIGHT + self.CELL_HEIGHT + self.CELL_OFFSET,
+                                                fill=fill, outline=outline, tags=(tag, self.ALL_TAG),
+                                                )
 
             self.canvas.tag_bind(tag, '<ButtonPress-1>', partial(self.left_click_handler, cur_tag=tag))
             self.canvas.tag_bind(tag, '<ButtonPress-2>', partial(self.middle_click_handler, cur_tag=tag))
@@ -228,9 +279,10 @@ class BIP:
             # self.bip.
             #int(self.canvas.winfo_height()*1.4)
             # print(f'{self.canvas.winfo_height()} / {self.CELL_HEIGHT}')
-            for r in range(0, 1977-380-380-380, self.CELL_HEIGHT):
+            for r in range(0, self.SHEET_HEIGHT, 1):
                 new_row = []
-                for c in range(0, 4985, self.CELL_WIDTH):
+                print(self.CELL_WIDTH)
+                for c in range(0, self.SHEET_WIDTH, 1):
                     tag = f'{r}_{c}'
                     self.draw('populate', c, r, self.WHITE, self.BLACK, tag=tag)
                     new_row.append(tag)
