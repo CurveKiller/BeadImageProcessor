@@ -87,7 +87,7 @@ class BIP:
             # self.debug_on = not self.debug_on
 
         def size_change_command(row=0, col=0):
-            pass
+            self.sheet.change_size(row, col)
 
         action_button_frame = ttk.Frame(self.main_frame)
         action_button_frame.grid(row=0, column=0, sticky='W')
@@ -134,20 +134,24 @@ class BIP:
         debug_check_box.grid(row=0, column=7)
 
         row_less_button = Button(action_button_frame, text='row-', height=button_height, width=button_width, padx=0, pady=0,
-                             command=partial(size_change_command, row=-1))
+                             command=partial(size_change_command, row=-2))
         row_less_button.grid(row=1, column=0)
+        # row_less_button['state'] = 'disabled'
 
         row_plus_button = Button(action_button_frame, text='row+', height=button_height, width=button_width, padx=0, pady=0,
-                            command=partial(size_change_command, row=1))
+                            command=partial(size_change_command, row=2))
         row_plus_button.grid(row=1, column=1)
+        row_plus_button['state'] = 'disabled'
 
         col_less_button = Button(action_button_frame, text='col-', height=button_height, width=button_width, padx=0, pady=0,
-                         command=partial(size_change_command, col=-1))
+                         command=partial(size_change_command, col=-2))
         col_less_button.grid(row=1, column=2)
+        # col_less_button['state'] = 'disabled'
 
         col_plus_button = Button(action_button_frame, text='col+', height=button_height, width=button_width, padx=0, pady=0,
-                         command=partial(size_change_command, col=1))
+                         command=partial(size_change_command, col=2))
         col_plus_button.grid(row=1, column=3)
+        col_plus_button['state'] = 'disabled'
 
     def setup_color_buttons(self):
         def set_fill_color(new_fill_color):
@@ -225,6 +229,38 @@ class BIP:
         def reset(self):
             self.canvas.delete(self.ALL_TAG)
             self.mat = []
+
+        def change_size(self, row, col):
+            if row != 0:
+                if row < 0:
+                    if self.sheet_height + row >= 1:
+                        for r in range(abs(row)):
+                            last_row = self.mat.pop()
+                            for cell in last_row:
+                                self.canvas.delete(cell)
+                            self.sheet_height -= 1
+                    else:
+                        print('Too little rows left!')
+                elif row > 0:
+                    pass
+            elif col != 0:
+                if col < 0:
+                    if self.sheet_width + col >= 1:
+                        for c in range(abs(col)):
+                            for row in self.mat:
+                                last_cell = row.pop()
+                                self.canvas.delete(last_cell)
+                            self.sheet_width -= 1
+
+                    else:
+                        print('Too little cols left!')
+                elif col > 0:
+                    pass
+            else:
+                print('change_size() called but with no parameters!')
+
+            print(f'sheet_height = {self.sheet_height} sheet_width = {self.sheet_width}')
+            print(f'mat = **{self.mat}**')
 
         def cell_change(self, action, x, y, tag, color):
             # if self.bip.debug_on == 1:
