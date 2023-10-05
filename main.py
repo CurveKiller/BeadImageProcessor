@@ -134,24 +134,24 @@ class BIP:
         debug_check_box.grid(row=0, column=7)
 
         row_less_button = Button(action_button_frame, text='row-', height=button_height, width=button_width, padx=0, pady=0,
-                             command=partial(size_change_command, row=-2))
+                             command=partial(size_change_command, row=-1))
         row_less_button.grid(row=1, column=0)
         # row_less_button['state'] = 'disabled'
 
         row_plus_button = Button(action_button_frame, text='row+', height=button_height, width=button_width, padx=0, pady=0,
-                            command=partial(size_change_command, row=2))
+                            command=partial(size_change_command, row=1))
         row_plus_button.grid(row=1, column=1)
-        row_plus_button['state'] = 'disabled'
+        # row_plus_button['state'] = 'disabled'
 
         col_less_button = Button(action_button_frame, text='col-', height=button_height, width=button_width, padx=0, pady=0,
-                         command=partial(size_change_command, col=-2))
+                         command=partial(size_change_command, col=-1))
         col_less_button.grid(row=1, column=2)
         # col_less_button['state'] = 'disabled'
 
         col_plus_button = Button(action_button_frame, text='col+', height=button_height, width=button_width, padx=0, pady=0,
-                         command=partial(size_change_command, col=2))
+                         command=partial(size_change_command, col=1))
         col_plus_button.grid(row=1, column=3)
-        col_plus_button['state'] = 'disabled'
+        # col_plus_button['state'] = 'disabled'
 
     def setup_color_buttons(self):
         def set_fill_color(new_fill_color):
@@ -242,7 +242,15 @@ class BIP:
                     else:
                         print('Too little rows left!')
                 elif row > 0:
-                    pass
+                    for r in range(abs(row)):
+                        new_row = []
+                        for col_index in range(self.sheet_width):
+                            new_tag = f'{self.sheet_height}_{col_index}'
+                            new_row.append(new_tag)
+                            self.draw('col+', col_index, self.sheet_height, self.WHITE,
+                                      outline=self.BLACK if self.bip.grid_on else '', tag=new_tag)
+                        self.mat.append(new_row)
+                        self.sheet_height += 1
             elif col != 0:
                 if col < 0:
                     if self.sheet_width + col >= 1:
@@ -255,7 +263,13 @@ class BIP:
                     else:
                         print('Too little cols left!')
                 elif col > 0:
-                    pass
+                    for c in range(abs(col)):
+                        for row_index in range(self.sheet_height):
+                            new_tag = f'{row_index}_{self.sheet_width}'
+                            self.mat[row_index].append(new_tag)
+                            self.draw('col+', self.sheet_width, row_index, self.WHITE,
+                                      outline=self.BLACK if self.bip.grid_on else '', tag=new_tag)
+                        self.sheet_width += 1
             else:
                 print('change_size() called but with no parameters!')
 
@@ -271,7 +285,7 @@ class BIP:
             return f'{c}_{r}'
 
         def get_rgb(self, pixel):
-            print(pixel)
+            # print(pixel)
             hex_r = hex(pixel[0])
             hex_g = hex(pixel[1])
             hex_b = hex(pixel[2])
@@ -348,7 +362,7 @@ class BIP:
                 self.sheet_width = width
                 for r in range(0, self.sheet_height, 1):
                     new_row = []
-                    print(self.CELL_WIDTH)
+                    # print(self.CELL_WIDTH)
                     for c in range(0, self.sheet_width, 1):
                         tag = f'{r}_{c}'
                         self.draw('populate', c, r, self.WHITE, self.BLACK, tag=tag)
