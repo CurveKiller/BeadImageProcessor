@@ -44,6 +44,106 @@ class BIP:
     def setup_action_buttons(self):
         def new_command():
             print('new')
+            new_window = Toplevel(self.root)
+            new_window.resizable(False, False)
+            new_window.geometry('180x115')
+            new_window.title('Loom Size')
+            new_window.grid_rowconfigure(0, weight=1)
+            new_window.grid_columnconfigure(0, weight=1)
+
+            new_window_frame = ttk.Frame(new_window, padding=10)
+            new_window_frame.grid(row=0, column=0, sticky='')
+
+            new_label = ttk.Label(new_window_frame, text='Please select loom size.')
+            new_label.grid(row=0, column=0, columnspan=2)
+
+            height_label = ttk.Label(new_window_frame, text='Height:')
+            height_label.grid(row=1, column=0, sticky='E')
+
+            width_label = ttk.Label(new_window_frame, text='Width:')
+            width_label.grid(row=2, column=0, sticky='E')
+
+            create_button = ttk.Button(new_window_frame)
+
+            class HeightWidthSemaphore:
+                def __init__(self):
+                    self.height_check = True
+                    self.width_check = True
+
+                def update_height(self, new_height):
+                    self.height_check = new_height
+
+                def update_width(self, new_width):
+                    self.width_check = new_width
+
+            wh_sema = HeightWidthSemaphore()
+
+            def create_button_enabler(whSema, height_checker=None, width_checker=None):
+                if height_checker != None:
+                    whSema.update_height(height_checker)
+                if width_checker != None:
+                    whSema.update_width(width_checker)
+                if whSema.height_check and whSema.width_check:
+                    create_button.configure(state='normal')
+                else:
+                    create_button.configure(state='disabled')
+
+            def validate_height(action, index, value_if_allowed,
+                         prior_value, text, validation_type, trigger_type, widget_name):
+                # https://stackoverflow.com/questions/8959815/restricting-the-value-in-tkinter-entry-widget
+                if value_if_allowed:
+                    try:
+                        int(value_if_allowed)
+                        create_button_enabler(wh_sema, height_checker=True)
+                        return True
+                    except ValueError:
+                        return False
+                else:
+                    create_button_enabler(wh_sema, height_checker=False)
+                    return True
+
+            vcmd_height = (new_window.register(validate_height),
+                           '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
+
+            def validate_width(action, index, value_if_allowed,
+                         prior_value, text, validation_type, trigger_type, widget_name):
+                # https://stackoverflow.com/questions/8959815/restricting-the-value-in-tkinter-entry-widget
+                if value_if_allowed:
+                    try:
+                        int(value_if_allowed)
+                        create_button_enabler(wh_sema, width_checker=True)
+                        return True
+                    except ValueError:
+                        return False
+                else:
+                    create_button_enabler(wh_sema, width_checker=False)
+                    return True
+            vcmd_width = (new_window.register(validate_width),
+                          '%d', '%i', '%P', '%s', '%S', '%v', '%V', '%W')
+
+            height_combo = ttk.Spinbox(new_window_frame, from_=1, to=200, width=6, validate='key', validatecommand=vcmd_height)
+            height_combo.grid(row=1, column=1)
+            height_combo.set(13)
+
+            width_combo = ttk.Spinbox(new_window_frame, from_=1, to=500, width=6, validate='key', validatecommand=vcmd_width)
+            width_combo.grid(row=2, column=1)
+            width_combo.set(50)
+
+            def create_loom(height_combo, width_combo):
+                height_combo.update()
+                width_combo.update()
+                print('create_loom')
+                # print(f'height={height_combo.get()} width={width_combo.get()}')
+                self.sheet.reset()
+                self.sheet.populate(int(height_combo.get()), int(width_combo.get()))
+                new_window.destroy()
+
+            height_combo.update()
+            create_button.configure(text='Create')
+            create_button.configure(command=partial(create_loom, height_combo, width_combo))
+            create_button.grid(row=3, column=0, columnspan=2)
+
+            # new_window.grab_set()
 
         def open_command():
             print('open')
@@ -97,37 +197,30 @@ class BIP:
         new_button = Button(action_button_frame, text='New', height=button_height, width=button_width, padx=0, pady=0,
                             command=new_command)
         new_button.grid(row=0, column=0)
-        new_button['state'] = 'disabled'
 
         open_button = Button(action_button_frame, text='Open', height=button_height, width=button_width, padx=0, pady=0,
                              command=open_command)
         open_button.grid(row=0, column=1)
-        # open_button['state'] = 'disabled'
 
         save_as_button = Button(action_button_frame, text='Save As', height=button_height, width=button_width, padx=0,
                                 pady=0, command=save_as_command)
         save_as_button.grid(row=0, column=2)
-        save_as_button['state'] = 'disabled'
 
         save_button = Button(action_button_frame, text='Save', height=button_height, width=button_width, padx=0, pady=0,
                              command=save_command)
         save_button.grid(row=0, column=3)
-        save_button['state'] = 'disabled'
 
         clear_button = Button(action_button_frame, text='Clear', height=button_height, width=button_width, padx=0,
                               pady=0, command=clear_command)
         clear_button.grid(row=0, column=4)
-        # clear_button['state'] = 'disabled'
 
         export_button = Button(action_button_frame, text='Export', height=button_height, width=button_width, padx=0,
                                pady=0, command=export_command)
         export_button.grid(row=0, column=5)
-        export_button['state'] = 'disabled'
 
         grid_button = Button(action_button_frame, text='Grid', height=button_height, width=button_width, padx=0, pady=0,
                              command=grid_command)
         grid_button.grid(row=0, column=6)
-        # grid_button['state'] = 'disabled'
 
         debug_check_box = ttk.Checkbutton(action_button_frame, text='Debug', command=debug_command,
                                           variable=self.debug_on )
@@ -136,22 +229,18 @@ class BIP:
         row_less_button = Button(action_button_frame, text='row-', height=button_height, width=button_width, padx=0, pady=0,
                              command=partial(size_change_command, row=-1))
         row_less_button.grid(row=1, column=0)
-        # row_less_button['state'] = 'disabled'
 
         row_plus_button = Button(action_button_frame, text='row+', height=button_height, width=button_width, padx=0, pady=0,
                             command=partial(size_change_command, row=1))
         row_plus_button.grid(row=1, column=1)
-        # row_plus_button['state'] = 'disabled'
 
         col_less_button = Button(action_button_frame, text='col-', height=button_height, width=button_width, padx=0, pady=0,
                          command=partial(size_change_command, col=-1))
         col_less_button.grid(row=1, column=2)
-        # col_less_button['state'] = 'disabled'
 
         col_plus_button = Button(action_button_frame, text='col+', height=button_height, width=button_width, padx=0, pady=0,
                          command=partial(size_change_command, col=1))
         col_plus_button.grid(row=1, column=3)
-        # col_plus_button['state'] = 'disabled'
 
     def setup_color_buttons(self):
         def set_fill_color(new_fill_color):
@@ -185,6 +274,7 @@ class BIP:
             color_button.grid(row=0, column=index)
 
     def populate_sheet(self):
+        print('populate_sheet')
         self.sheet.populate()
 
     def run(self):
@@ -227,6 +317,7 @@ class BIP:
             self.mat = []
 
         def reset(self):
+            print('reset')
             self.canvas.delete(self.ALL_TAG)
             self.mat = []
 
@@ -309,7 +400,6 @@ class BIP:
                     cur_tag = self.get_tag(r, c)
                     self.canvas.itemconfigure(cur_tag, fill=self.get_rgb(pixels[r,c]))
 
-
         def left_click_handler(self, event, cur_tag):
             self.cell_change('l-click', event.x, event.y, cur_tag, self.bip.primary_color)
             self.canvas.itemconfigure(cur_tag, fill=self.bip.primary_color)
@@ -347,7 +437,8 @@ class BIP:
             # self.bip.
             #int(self.canvas.winfo_height()*1.4)
             # print(f'{self.canvas.winfo_height()} / {self.CELL_HEIGHT}')
-
+            print('populate')
+            print(f'height={height} width={width}')
             if height == -1 and width == -1:
                 for r in range(0, self.sheet_height, 1):
                     new_row = []
@@ -360,10 +451,10 @@ class BIP:
             else:
                 self.sheet_height = height
                 self.sheet_width = width
-                for r in range(0, self.sheet_height, 1):
+                for r in range(0, height, 1):
                     new_row = []
                     # print(self.CELL_WIDTH)
-                    for c in range(0, self.sheet_width, 1):
+                    for c in range(0, width, 1):
                         tag = f'{r}_{c}'
                         self.draw('populate', c, r, self.WHITE, self.BLACK, tag=tag)
                         new_row.append(tag)
