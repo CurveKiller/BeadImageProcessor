@@ -445,7 +445,7 @@ class BIP:
                     print(self.CELL_WIDTH)
                     for c in range(0, self.sheet_width, 1):
                         tag = f'{r}_{c}'
-                        self.draw('populate', c, r, self.WHITE, self.BLACK, tag=tag)
+                        self.draw('populate', c, r, self.WHITE, self.BLACK if self.bip.grid_on else '', tag=tag)
                         new_row.append(tag)
                     self.mat.append(new_row)
             else:
@@ -456,7 +456,7 @@ class BIP:
                     # print(self.CELL_WIDTH)
                     for c in range(0, width, 1):
                         tag = f'{r}_{c}'
-                        self.draw('populate', c, r, self.WHITE, self.BLACK, tag=tag)
+                        self.draw('populate', c, r, self.WHITE, self.BLACK if self.bip.grid_on else '', tag=tag)
                         new_row.append(tag)
                     self.mat.append(new_row)
 
