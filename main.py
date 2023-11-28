@@ -1,9 +1,11 @@
+import re
 from tkinter import *
 from tkinter import ttk
 from functools import partial
 from tkinter import filedialog as fd
 from PIL import Image
 import math
+import re
 
 class BIP:
     def __init__(self):
@@ -21,7 +23,7 @@ class BIP:
     def prep_root(self):
         self.root.title('BeadImagizerProcessor')
         # self.root.resizable(False, False)
-        self.root.geometry('1078x313')
+        self.root.geometry('1078x353')
         self.root.minsize(854, 85)
         self.main_frame = ttk.Frame(self.root, padding=10)
         self.main_frame.grid(row=0, column=0, sticky='NSEW')
@@ -278,7 +280,7 @@ class BIP:
         def examine_command():
             print('examine')
             examine_window = Toplevel(self.root)
-            examine_window.resizable(False, False)
+            # examine_window.resizable(False, False)
             examine_window.geometry('400x600')
             examine_window.title('Examine')
 
@@ -286,7 +288,7 @@ class BIP:
             examine_window.grid_columnconfigure(0, weight=1)
 
             examine_window_frame = ttk.Frame(examine_window, padding=10)
-            examine_window_frame.grid(row=0, column=0, sticky='')
+            examine_window_frame.grid(row=0, column=0, sticky='NSEW')
 
             examine_window_frame.grid_rowconfigure(0, weight=1)
             examine_window_frame.grid_columnconfigure(0, weight=1)
@@ -347,12 +349,12 @@ class BIP:
 
             bead_labels = []
             bead_label_font = ('Segoe UI', 10, 'bold')
-            color_encoder_frame.grid_columnconfigure(0, weight=1)
+            loom_parser_frame.grid_columnconfigure(0, weight=1)
             for row_index in range(len(self.sheet.mat)):
-                bead_label = Label(loom_parser_frame, text='A', font=bead_label_font)
+                bead_label = Label(loom_parser_frame, font=bead_label_font, borderwidth=1, relief='solid', )
                 bead_labels.append(bead_label)
-                bead_label.grid(row=row_index, column=0)
-                color_encoder_frame.grid_rowconfigure(row_index, weight=1)
+                bead_label.grid(row=row_index, column=0, sticky='NSEW')
+                loom_parser_frame.grid_rowconfigure(row_index, weight=1)
 
             # set bead_labels to first column
             current_col = 0
@@ -362,22 +364,38 @@ class BIP:
                 nonlocal color_strings
                 for bead_label_index in range(len(bead_labels)):
                     bead_color = self.sheet.canvas.itemcget(self.sheet.mat[bead_label_index][current_col], 'fill')
-                    print(f'bead_color = {bead_color}')
+                    # print(f'bead_color = {bead_color}')
                     bead_text = ''
                     for color_string in color_strings:
-                        print(f'color_string[0] = {color_string[0]}')
+                        # print(f'color_string[0] = {color_string[0]}')
                         if color_string[0] == bead_color:
                             bead_labels[bead_label_index].config(text=color_string[1].get())
-                            bead_labels[bead_label_index].config(fg=color_string[0])
+                            # bead_labels[bead_label_index].config(fg=color_string[0])
+            focus_pattern = '.!toplevel\d*.!frame.!labelframe2.!entry\d*'
 
             def increment_bead_labels(event=None):
-                print('increment_bead_labels')
-                nonlocal current_col
-                current_col += 1
-                current_col %= len(self.sheet.mat[0])
-                set_bead_labels()
+                if not re.search(focus_pattern, str(examine_window.focus_get())):
+                    print('increment_bead_labels')
+                    nonlocal current_col
+                    current_col += 1
+                    current_col %= len(self.sheet.mat[0])
+                    set_bead_labels()
 
+            def decrement_bead_labels(event=None):
+                # print(f'uhoh = {str(examine_window.focus_get())}')
+
+                if not re.search(focus_pattern, str(examine_window.focus_get())):
+                    # funcPP(player)
+                    print('decrement_bead_labels')
+                    nonlocal current_col
+                    current_col -= 1
+                    if current_col < 0:
+                        current_col = len(self.sheet.mat[0])-1
+                    set_bead_labels()
+
+            examine_window.bind_all("<Button-1>", lambda event: event.widget.focus_set())
             examine_window.bind("<space>", increment_bead_labels)
+            examine_window.bind("<BackSpace>", decrement_bead_labels)
             set_bead_labels()
             examine_window.grab_set()
 
